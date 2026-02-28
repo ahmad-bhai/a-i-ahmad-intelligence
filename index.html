@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CHATGRAM AI | MODEL 1</title>
+link rel="shortcut icon"
+        href="logo.png"
+        type="image/x-icon">
+<link rel="icon" href="logo.png" type="image/png" />
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
 body{background:#121212;display:flex;justify-content:center;height:100vh;color:white;overflow:hidden;}
@@ -115,7 +119,7 @@ initChat();
 
 function initChat(){
   const keys=Object.keys(chats);
-  if(keys.length===0){ currentChatId='Chat_1'; chats[currentChatId]=[]; localStorage.setItem('currentChatId',currentChatId); }
+  if(keys.length===0){ currentChatId='Chat1'; chats[currentChatId]=[]; localStorage.setItem('currentChatId',currentChatId); }
   renderMessages();
 }
 
