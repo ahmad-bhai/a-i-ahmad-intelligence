@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHATGRAM AI | MODEL 1</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+body{background:#121212;display:flex;justify-content:center;height:100vh;color:white;overflow:hidden;}
+.container{width:100%;max-width:600px;height:100vh;display:flex;flex-direction:column;position:relative;}
+.top-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:600px;display:flex;justify-content:space-between;padding:10px 15px;z-index:30;background:transparent;}
+.top-bar .icon{width:40px;height:40px;border-radius:50%;background:rgba(28,36,42,0.15);backdrop-filter:blur(6px);display:flex;justify-content:center;align-items:center;cursor:pointer;font-size:20px;color:white;}
+.selector-options{position:absolute;top:50px;background:#1e1e1e;border:1px solid #555;display:none;flex-direction:column;z-index:35;max-height:300px;overflow-y:auto;}
+.selector-options div{padding:10px 12px;display:flex;align-items:center;gap:12px;cursor:pointer;color:#fff;}
+.selector-options div:hover{background:rgba(255,255,255,0.03);}
+.chat-area{flex:1;margin-top:60px;margin-bottom:60px;background:url('bg.png') center/cover no-repeat;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px;}
+.message{padding:10px 15px;border-radius:12px;max-width:80%;word-wrap:break-word;position:relative;color:white;}
+.user{align-self:flex-end;background:rgba(146,126,195,0.85);}
+.bot{align-self:flex-start;background:rgba(112,41,149,0.85);}
+.msg-options{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,0.4);backdrop-filter:blur(6px);display:flex;justify-content:center;align-items:center;cursor:pointer;font-size:16px;color:white;}
+.user .msg-options{left:-35px;}
+.bot .msg-options{right:-35px;}
+.msg-actions{position:absolute;top:0;display:none;flex-direction:column;gap:5px;background:#222;padding:5px;border-radius:8px;z-index:22;}
+.msg-actions div{padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;color:white;}
+.msg-actions div:hover{background:#444;}
+.msg-actions img{width:16px;height:16px;}
+.input-container{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:600px;display:flex;border-top:1px solid #555;padding:5px;background:rgba(28,36,42,0.25);backdrop-filter:blur(6px);z-index:10;}
+.input-container input{flex:1;border:none;padding:12px;font-size:16px;border-radius:8px;background:rgba(28,36,42,0.35);color:white;}
+.input-container button{border:none;background:rgba(28,36,42,0.35);backdrop-filter:blur(6px);cursor:pointer;width:40px;border-radius:50%;display:flex;justify-content:center;align-items:center;}
+.input-container input:focus{outline:none;}
+#previousChats{display:flex;flex-direction:column;gap:5px;}
+#previousChats div{border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;}
+#previousChats img{width:16px;height:16px;cursor:pointer;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;justify-content:center;align-items:center;z-index:50;}
+.modal .modal-content{background:#222;padding:20px;border-radius:12px;max-width:320px;text-align:center;color:white;}
+.modal input{padding:10px;width:80%;border-radius:6px;margin:10px 0;border:none;}
+.modal button{margin:5px;padding:10px 20px;border:none;border-radius:8px;background:rgba(146,126,195,0.85);color:white;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="icon" id="chatBtn">☰</div>
+  <div class="icon" id="modelBtn">☰</div>
+</div>
+
+<div class="selector-options" id="chatDropdown">
+  <div id="newChat">+ New Chat</div>
+  <div id="previousChats"></div>
+</div>
+
+<div class="selector-options" id="modelDropdown">
+  <div data-model="1">Chatgram Model 1</div>
+  <div data-model="2">Chatgram Model 2</div>
+</div>
+
+<div class="container">
+  <div class="chat-area" id="messages"></div>
+  <div class="input-container">
+    <input type="text" id="userInput" placeholder="Type a message...">
+    <button id="sendBtn"><img src="send.png" style="width:24px;height:24px;"></button>
+  </div>
+</div>
+
+<!-- Model 2 Popup -->
+<div id="model2Modal" class="modal">
+  <div class="modal-content">
+    <p>You reached the max 5 chats or 15 messages in this chat. Switch to Model 2?</p>
+    <button id="openModel2">Open Model 2</button>
+    <button id="closeModel2">Close</button>
+  </div>
+</div>
+
+<!-- Redeem Popup -->
+<div id="redeemModal" class="modal">
+  <div class="modal-content">
+    <p>Enter Redeem Code to unlock extra chat:</p>
+    <input type="text" id="redeemInput" placeholder="Redeem Code">
+    <div>
+      <button id="runRedeem">Run Redeem</button>
+      <button id="closeRedeem">Close</button>
+    </div>
+    <p style="font-size:12px;margin-top:5px;">Contact to get Redeem Code: <a href="https://t.me/AhmadTrader3" style="color:#927EC3;">@AhmadTrader3</a></p>
+  </div>
+</div>
+
+<script>
+const API_KEY = "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";
+
+const messagesEl=document.getElementById('messages');
+const userInput=document.getElementById('userInput');
+const sendBtn=document.getElementById('sendBtn');
+const chatBtn=document.getElementById('chatBtn');
+const chatDropdown=document.getElementById('chatDropdown');
+const modelBtn=document.getElementById('modelBtn');
+const modelDropdown=document.getElementById('modelDropdown');
+const modal=document.getElementById('model2Modal');
+const openModel2Btn=document.getElementById('openModel2');
+const closeModel2Btn=document.getElementById('closeModel2');
+const redeemModal=document.getElementById('redeemModal');
+const redeemInput=document.getElementById('redeemInput');
+const runRedeemBtn=document.getElementById('runRedeem');
+const closeRedeemBtn=document.getElementById('closeRedeem');
+
+let currentChatId=null;
+let chats={};
+let redeemCount=parseInt(localStorage.getItem('redeemCount')||'0');
+
+// Reset localStorage on load
+localStorage.removeItem('chats');
+localStorage.removeItem('currentChatId');
+localStorage.setItem('redeemCount',redeemCount);
+
+initChat();
+
+function initChat(){
+  const keys=Object.keys(chats);
+  if(keys.length===0){ currentChatId='Chat_1'; chats[currentChatId]=[]; localStorage.setItem('currentChatId',currentChatId); }
+  renderMessages();
+}
+
+function renderMessages(){
+  messagesEl.innerHTML='';
+  if(!currentChatId) return;
+  chats[currentChatId].forEach((m,i)=>{
+    const msgDiv=document.createElement('div');
+    msgDiv.className='message '+(m.sender==='user'?'user':'bot');
+    msgDiv.innerText=m.text;
+
+    const msgIcon=document.createElement('span');
+    msgIcon.className='msg-options';
+    msgIcon.innerText='☰';
+    msgDiv.appendChild(msgIcon);
+
+    const actions=document.createElement('div');
+    actions.className='msg-actions';
+    const copy=document.createElement('div'); copy.innerHTML='<img src="copy.png"> Copy'; copy.onclick=()=>navigator.clipboard.writeText(chats[currentChatId][i].text);
+    actions.appendChild(copy);
+    msgDiv.appendChild(actions);
+
+    msgIcon.onclick=()=>{ actions.style.display='flex'; setTimeout(()=>{actions.style.display='none';},3000); };
+    messagesEl.appendChild(msgDiv);
+  });
+  messagesEl.scrollTop=messagesEl.scrollHeight;
+
+  // Show popup if messages>=15
+  if(chats[currentChatId].length>=15){ modal.style.display='flex'; }
+}
+
+function saveChats(){ localStorage.setItem('chats',JSON.stringify(chats)); }
+function addMessage(text,sender){ 
+  if(!currentChatId) return;
+  chats[currentChatId].push({text,sender}); 
+  saveChats(); 
+  renderMessages(); 
+}
+
+sendBtn.onclick=sendMessage;
+userInput.addEventListener('keypress',e=>{if(e.key==='Enter') sendMessage();});
+
+function sendMessage(){
+  const text=userInput.value.trim();
+  if(!text) return;
+  addMessage(text,'user');
+  userInput.value='';
+  addMessage('Typing...','bot');
+
+  if(/owner/i.test(text)){
+    updateBotMessage(chats[currentChatId].length-1, navigator.language.startsWith('ur')?'Mera owner Aur developer aik hi hai, uska Naam Ahmad Bhai hai, Telegram: @AhmadTrader3':'My owner and developer are the same: Ahmad Bhai, Telegram: @AhmadTrader3');
+    return;
+  }
+
+  fetch("https://api.openai.com/v1/chat/completions",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization": `Bearer ${API_KEY}`
+    },
+    body:JSON.stringify({
+      model:"gpt-4",
+      messages:[{role:"user",content:text}],
+      temperature:0.7,
+      max_tokens:500
+    })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    updateBotMessage(chats[currentChatId].length-1,data.choices[0].message.content.trim());
+  })
+  .catch(err=>updateBotMessage(chats[currentChatId].length-1,"Error contacting AI."));
+}
+
+function updateBotMessage(index,text){ chats[currentChatId][index].text=text; saveChats(); renderMessages(); }
+
+// Chat Dropdown
+chatBtn.onclick=()=>{chatDropdown.style.display=chatDropdown.style.display==='flex'?'none':'flex';}
+document.getElementById('newChat').onclick=()=>{
+  if(Object.keys(chats).length>=5){
+    if(redeemCount<50){ redeemModal.style.display='flex'; } 
+    else{ modal.style.display='flex'; }
+    return;
+  }
+  const newId='Chat_'+(Object.keys(chats).length+1); 
+  currentChatId=newId; 
+  localStorage.setItem('currentChatId',newId); 
+  chats[newId]=[]; 
+  saveChats(); 
+  renderMessages(); 
+  chatDropdown.style.display='none';
+}
+
+function renderPreviousChats(){
+  const prevChatsEl=document.getElementById('previousChats'); prevChatsEl.innerHTML='';
+  Object.keys(chats).forEach(id=>{
+    const div=document.createElement('div'); 
+    div.innerText=id;
+
+    const pinImg=document.createElement('img'); pinImg.src='pin.png'; pinImg.title='Pin Chat'; pinImg.onclick=(e)=>{
+      e.stopPropagation();
+      const pinned=Object.keys(chats).filter(c=>c!==id); 
+      const temp={}; temp[id]=chats[id]; pinned.forEach(c=>temp[c]=chats[c]); chats=temp; saveChats(); renderPreviousChats();
+    }
+
+    const delImg=document.createElement('img'); delImg.src='delete.png'; delImg.title='Delete Chat'; delImg.onclick=(e)=>{
+      e.stopPropagation();
+      delete chats[id]; 
+      saveChats(); 
+      const keys=Object.keys(chats); 
+      currentChatId=keys[0]||null; 
+      renderMessages(); 
+      renderPreviousChats();
+    }
+
+    div.appendChild(pinImg);
+    div.appendChild(delImg);
+    div.onclick=()=>{currentChatId=id; localStorage.setItem('currentChatId',id); renderMessages(); chatDropdown.style.display='none';}
+    prevChatsEl.appendChild(div);
+  });
+}
+setInterval(renderPreviousChats,1000);
+
+// Model Dropdown
+modelBtn.onclick=()=>{modelDropdown.style.display=modelDropdown.style.display==='flex'?'none':'flex';}
+modelDropdown.querySelectorAll('div').forEach(el=>{
+  el.onclick=()=>{ if(el.dataset.model==='1'){ location.reload(); } else { window.location.href='model2.html'; } modelDropdown.style.display='none'; }
+});
+
+// Model 2 popup
+openModel2Btn.onclick=()=>{ window.location.href='model2.html'; }
+closeModel2Btn.onclick=()=>{ modal.style.display='none'; }
+
+// Redeem popup
+runRedeemBtn.onclick=()=>{
+  if(redeemInput.value.trim()==='Ahmad Bhai6677' && redeemCount<50){
+    redeemCount++;
+    localStorage.setItem('redeemCount',redeemCount);
+    const newId='Chat_'+(Object.keys(chats).length+1); 
+    currentChatId=newId; 
+    localStorage.setItem('currentChatId',newId); 
+    chats[newId]=[]; 
+    saveChats(); 
+    renderMessages();
+    redeemModal.style.display='none';
+  } else {
+    alert('Invalid code or max Redeem reached'); 
+  }
+}
+closeRedeemBtn.onclick=()=>{ redeemModal.style.display='none'; }
+
+</script>
+</body>
+</html>
